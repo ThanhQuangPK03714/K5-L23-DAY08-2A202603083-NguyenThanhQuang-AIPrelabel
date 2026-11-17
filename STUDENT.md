@@ -1,10 +1,10 @@
 # Thông tin học viên
 
-- Họ và tên: <<>>
-- MSHV: <<>>
-- Lớp (L2 / L3 / khác): <<>>
-- Tài khoản GitHub: <<>>
-- Repo bài nộp (URL): <<>>
+- Họ và tên: Nguyễn Thanh Quang
+- MSHV: 2A202603083
+- Lớp: L2
+- Tài khoản GitHub: https://github.com/ThanhQuangPK03714/K5-L23-DAY08-2A202603083-NguyenThanhQuang-AIPrelabel
+- Repo bài nộp (URL): (https://github.com/ThanhQuangPK03714/K5-L23-DAY08-2A202603083-NguyenThanhQuang-AIPrelabel)
 - Commit chốt bài (hash): <<>>
 - Máy: <<hệ điều hành, GPU (CUDA / MPS / không có)>>
 - CVAT (Docker): <<phiên bản, ví dụ v2.81.0>>

@@ -23,6 +23,7 @@ Ví dụ:
 from __future__ import annotations
 
 import argparse
+import csv
 import re
 import sys
 import time
@@ -34,10 +35,53 @@ import numpy as np
 from PIL import Image
 
 from common import (IMAGES_DIR, ROOT, WORK, Taxonomy, build_coco, die, images_of, load_split, load_taxonomy,
-                    make_ann, mask_to_polys, box_iou, pick_device, read_csv, rel, save_json, write_csv, Obj)
+                    make_ann, mask_to_polys, box_iou, pick_device, read_csv, rel, save_json, Obj)
 
 MODELS_DIR = ROOT / "models"
+RUNS_CSV = WORK / "runs.csv"
+MODEL_LOG_CSV = ROOT / "submission" / "model_log.csv"
+RUN_COLUMNS = ["run_id", "part", "model", "params", "split", "n_boxes", "sec_per_img",
+               "what_went_right", "what_went_wrong", "decision", "out", "device", "n_images",
+               "n_masks", "dropped", "note"]
+MODEL_LOG_COLUMNS = ["run_id", "part", "model", "params", "split", "n_boxes", "sec_per_img",
+                     "what_went_right", "what_went_wrong", "decision"]
 Det = Tuple[str, float, Tuple[float, float, float, float], Optional[List[List[float]]]]  # (tên thô, score, box, polys)
+
+
+def _path_key(value: str) -> str:
+    return value.replace("/", "\\").rstrip("\\").casefold()
+
+
+def _write_log_csv(path: Path, columns: List[str], rows: List[dict]) -> None:
+    """Write these user-facing logs with a BOM so Excel detects UTF-8 Vietnamese."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8-sig", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=columns, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def sync_model_log(runs: List[dict]) -> None:
+    """Merge run metrics into the submission log while keeping human review notes."""
+    old_rows = read_csv(MODEL_LOG_CSV) if MODEL_LOG_CSV.exists() else []
+    old_by_id = {row.get("run_id", ""): row for row in old_rows if row.get("run_id")}
+    old_by_out = {_path_key(row.get("out", "")): row for row in old_rows if row.get("out")}
+
+    # Keep manually added log entries; generated runs replace matching run_id or output path.
+    merged = {row.get("run_id", ""): dict(row) for row in old_rows if row.get("run_id")}
+    for run in runs:
+        log_row = {key: run.get(key, "") for key in MODEL_LOG_COLUMNS}
+        previous = old_by_id.get(run.get("run_id", "")) or old_by_out.get(_path_key(run.get("out", "")), {})
+        for key in ("part", "what_went_right", "what_went_wrong", "decision"):
+            if previous.get(key):
+                log_row[key] = previous[key]
+        merged[log_row["run_id"]] = log_row
+
+    # Keep run order first, followed by any manually added rows not present in runs.csv.
+    ordered_ids = [run.get("run_id", "") for run in runs]
+    ordered_ids.extend(rid for rid in merged if rid not in ordered_ids)
+    _write_log_csv(MODEL_LOG_CSV, MODEL_LOG_COLUMNS,
+                   [merged[rid] for rid in ordered_ids if rid in merged])
 
 
 # --------------------------------------------------------------------------- tiện ích
@@ -409,16 +453,29 @@ def main():
     print(f"Thời gian: nạp {t_load:.1f}s, chạy {dt:.1f}s ({dt / max(1, len(images)):.2f}s/ảnh)")
 
     params = " ".join(sys.argv[1:])
-    runs = WORK / "runs.csv"
-    rows = read_csv(runs) if runs.exists() else []
-    run = {"run_id": f"r{len(rows) + 1:02d}", "part": "", "model": a.model + (f"-{a.size}" if "yolo" in a.model else "") + (f"+sam({a.sam})" if a.segmenter in ("sam", "sam2") else ""),
-           "params": params, "split": a.split or "custom", "n_boxes": len(anns),
-           "sec_per_img": round(dt / max(1, len(images)), 2), "what_went_right": "", "what_went_wrong": "", "decision": "",
-           "out": rel(out), "device": device, "n_images": len(images), "n_masks": sum(1 for x in anns if x["segmentation"]),
-           "dropped": ";".join(f"{k}x{v}" for k, v in dropped.items()), "note": a.note}
+    rows = read_csv(RUNS_CSV) if RUNS_CSV.exists() else []
+    out_rel = rel(out)
+    prior_run = next((r for r in rows if _path_key(r.get("out", "")) == _path_key(out_rel)), None)
+    numeric_ids = [int(m.group(1)) for r in rows
+                   if (m := re.fullmatch(r"r(\d+)", r.get("run_id", ""), re.I))]
+    run_id = prior_run["run_id"] if prior_run else f"r{max(numeric_ids, default=0) + 1:02d}"
+    split_by_image = load_split()
+    image_splits = {split_by_image[name]["split"] for name in names if name in split_by_image}
+    detected_split = next(iter(image_splits)) if len(image_splits) == 1 and len(image_splits) == len({split_by_image.get(n, {}).get("split") for n in names}) else "custom"
+    run = {"run_id": run_id, "part": prior_run.get("part", "Part 2") if prior_run else "Part 2",
+           "model": a.model + (f"-{a.size}" if "yolo" in a.model else "") + (f"+sam({a.sam})" if a.segmenter in ("sam", "sam2") else ""),
+           "params": params, "split": a.split or detected_split, "n_boxes": len(anns),
+           "sec_per_img": round(dt / max(1, len(images)), 2),
+           "what_went_right": prior_run.get("what_went_right", "") if prior_run else "",
+           "what_went_wrong": prior_run.get("what_went_wrong", "") if prior_run else "",
+           "decision": prior_run.get("decision", "") if prior_run else "",
+           "out": out_rel, "device": device, "n_images": len(images), "n_masks": sum(1 for x in anns if x["segmentation"]),
+           "dropped": ";".join(f"{k}x{v}" for k, v in dropped.items()),
+           "note": a.note or (prior_run.get("note", "") if prior_run else "")}
     save_json(out / "run.json", run)
-    rows = [r for r in rows if r.get("out") != run["out"]] + [run]
-    write_csv(runs, list(run.keys()), rows)
+    rows = [r for r in rows if _path_key(r.get("out", "")) != _path_key(run["out"])] + [run]
+    _write_log_csv(RUNS_CSV, RUN_COLUMNS, rows)
+    sync_model_log(rows)
 
     if not a.no_viz:
         from viz import draw_image
