@@ -1,1 +1,3 @@
 step,images,minutes,note
+gold_manual,4,35,Ước lượng hồi cứu theo 47 annotation Gold; không có timer log
+batch_review,24,90,Ước lượng hồi cứu theo 508 đối tượng sau duyệt; không có timer log

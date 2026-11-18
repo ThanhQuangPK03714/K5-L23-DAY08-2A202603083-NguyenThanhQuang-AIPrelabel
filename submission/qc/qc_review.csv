@@ -1,0 +1,6 @@
+image,object_id,error_type,reviewer,note
+img_003.jpg,,khong,Codex,"Overlay-đối-chiếu-ảnh-gốc; không ghi nhận lỗi rõ trong lần rà QC này."
+img_006.jpg,,khong,Codex,"Overlay-đối-chiếu-ảnh-gốc; không ghi nhận lỗi rõ trong lần rà QC này."
+img_014.jpg,,khong,Codex,"Overlay-đối-chiếu-ảnh-gốc; không ghi nhận lỗi rõ trong lần rà QC này."
+img_031.jpg,445,thua,Codex,"Box person đặt lên mũ trưng bày trong cửa hàng, không phải người."
+img_035.jpg,496,sai_vi_tri_kich_thuoc,Codex,"Bẫy loose motorbike vẫn còn trong nhãn cuối; box #496 rộng hơn xe nhìn thấy."

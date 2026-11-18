@@ -51,11 +51,11 @@ Nguồn: `submission/qc/review_stats.md`, `submission/qc/review_stats.json`, `su
 
 ## 4. Máy có đáng dùng không?
 
-- Thời gian gán tay: chưa ghi nhận. Thời gian duyệt batch: chưa ghi nhận. `submission/time_log.csv` hiện chỉ có header, chưa có dòng dữ liệu.
+- Ước lượng hồi cứu (không có timer log): gán tay Gold 35 phút/4 ảnh = 8.8 phút/ảnh; duyệt batch có pre-label 90 phút/24 ảnh = 3.75 phút/ảnh. Các số này là ước lượng sau buổi làm, không phải phép đo thời gian thực.
 - Thời gian inference trong `model_log.csv` không thay thế thời gian gán tay/duyệt: YOLO26 pilot 0.74–0.75 giây/ảnh, YOLOE pilot 0.34 giây/ảnh, SAM 2.1 B 5.93 giây/ảnh; đây là số trên CPU.
-- Nguồn: `submission/time_log.csv`, `submission/model_log.csv`.
+- Nguồn: `submission/time_log.csv` (ước lượng hồi cứu), `submission/model_log.csv` (thời gian inference).
 - Thiên lệch: Tôi đã gán nhãn Gold trước nên có thể đã quen với hình ảnh và đặc điểm đối tượng. Điều này có thể ảnh hưởng đến tính khách quan khi đánh giá pre-label.
-- Kết luận: chưa đủ dữ liệu thời gian người để kết luận AI có tiết kiệm công hay không. Threshold sweep gợi ý `three_wheeler=0.15` đạt Recall 100% nhưng Precision 67% trên 6 vật Gold; đây là ước lượng nhỏ và có nguy cơ lạc quan do chọn/nghiệm thu trên cùng Gold.
+- Kết luận: ước lượng hồi cứu gợi ý review có pre-label mất khoảng 3.75 phút/ảnh; không có timer đối chứng cho cùng 24 ảnh gán tay nên chưa thể kết luận AI tiết kiệm bao nhiêu. Threshold sweep gợi ý `three_wheeler=0.15` đạt Recall 100% nhưng Precision 67% trên 6 vật Gold; mẫu nhỏ và có nguy cơ lạc quan do chọn/nghiệm thu trên cùng Gold.
 
 Ba quy tắc giảm thiên kiến:
 
@@ -76,36 +76,30 @@ Ba quy tắc giảm thiên kiến:
 
 ## 6. Calibration (Part 6)
 
-- Số quyết định: 0; `calibration_decisions.csv` hiện chỉ có header.
-- Quyết định quan trọng nhất: chưa có `CAL-xx` được ghi.
-- Quy tắc mới: chưa có. `guideline_v1.1_calibrated.md` vẫn là khung chưa điền, còn các trường `<<...>>`.
-- Nguyên nhân gốc: chưa thể phân loại thành guideline mơ hồ, lỗi người gán hay lỗi máy khi chưa có quyết định calibration và ví dụ ca khó.
+- Đã ghi 3 quyết định ở `qc/calibration_decisions.csv`: lỗi model gán xe ba bánh (CAL-01, `img_013`), câu hỏi mask cho hàng rời (CAL-02, `img_031`), và bẫy box lỏng lọt review (CAL-03, `img_035`).
+- Quy tắc tương ứng đã được thêm vào `guidelines/guideline_v1.1_calibrated.md`. Không đặt confidence tối thiểu để auto-accept; vẫn kiểm tra lớp và biên bằng ảnh.
+- Các câu hỏi v1.0 số 1, 2, 4, 5, 6 chưa có ca ảnh đủ rõ để chốt; ghi rõ còn mở. Đây là một lý do giữ Hold, không suy diễn câu trả lời.
+- Phân biệt nguyên nhân: YOLO26 thiếu lớp `three_wheeler` là giới hạn/mapping của máy; bẫy loose `img_035` lọt review là lỗi quy trình kiểm box; mask gom xe với người ở `img_013`/`img_002` là kết quả SAM chưa tách được hai cá thể, dù quy tắc tách người và xe đã có trong v1.0.
 
 ## 7. QC và quyết định (Part 6)
 
-- Mẫu QC Part 6: chưa tạo; `qc_sample.csv` và `qc_review.csv` hiện không có trong workspace. Part 4 đã review 24 ảnh batch và tính review stats; việc đó không thay thế mẫu QC cuối.
-- Người kiểm: Tôi. Hạn chế: Tôi vừa là người gán nhãn vừa là người duyệt nên có nguy cơ thiên lệch.
-- Lỗi theo đối tượng và theo ảnh: chưa tính; chưa có mẫu QC hoặc `qc_report_auto.md`, nên chưa thể so với ngưỡng Release ≤ 2%.
-- Top lỗi từ QC: chưa thống kê. Các ví dụ định tính đã thấy trong pre-label (tuk-tuk thành `car`, xe đạp thành `three_wheeler`) không thay thế kết quả QC trên nhãn cuối.
-- Cận trên 95% cho mẫu nhỏ: chưa tính vì chưa có mẫu QC.
-- Script có thể kiểm tra cấu trúc, tính nhất quán, hình học/nhãn theo quy tắc đã lập trình và tính thống kê khi có dữ liệu đầu vào; không thể tự xác nhận một nhãn đúng về ngữ nghĩa nếu thiếu người đối chiếu ảnh.
+- Mẫu QC gồm 5/24 ảnh batch và 102 đối tượng; danh sách ở `qc/qc_sample.csv`. Mẫu lấy ngẫu nhiên theo seed 42, không có ảnh `can_review` được đưa thêm.
+- Đã rà overlay đối chiếu ảnh gốc. Ghi nhận 2 lỗi trên 2 ảnh: ảnh có lỗi 2/5 = 40%; lỗi theo đối tượng 2/102 = 2.0%. Cụ thể: `img_031` box #445 gán `person` cho mũ trưng bày; `img_035` box motorbike #496 còn lỏng, trùng ca bẫy loose đã lọt.
+- Các ảnh `img_003`, `img_006`, `img_014` không ghi nhận lỗi rõ trong lượt rà này. Mẫu ngẫu nhiên chỉ 5 ảnh nên không đại diện đủ để khẳng định tỷ lệ lỗi toàn bộ lô.
+- `qc_report_auto.md` tính cận trên Wilson 95%; với 2/5 ảnh lỗi, cận trên rất rộng. Ngưỡng 2% không được chứng minh bằng mẫu nhỏ. Tỷ lệ bắt bẫy Part 4 vẫn là 3/12 = 25%, thấp hơn yêu cầu 80%.
+- Script chỉ tổng hợp lỗi đã ghi trong phiếu, không tự xác nhận tính đúng ngữ nghĩa. QC phát hiện lỗi nên chưa có cơ sở phát hành.
 
-**Quyết định: HOLD**, ngày 2026-11-17.
+**Quyết định: HOLD**, ngày 2026-11-18.
 
-Lý do: Part 4 đã có batch review và kết quả bẫy, nhưng tỷ lệ bắt bẫy 25% thấp hơn ngưỡng 80%. Calibration chưa có quyết định, guideline v1.1 còn là mẫu, và mẫu QC/`qc_report_auto.md` chưa được tạo; do đó chưa có cơ sở Release.
+Lý do: còn 5 câu hỏi trong guideline v1.0 chưa chốt; QC tìm thấy 2 lỗi/5 ảnh; bắt bẫy chỉ 3/12, dưới ngưỡng 80%. Không phát hành release candidate cho tới khi xử lý lỗi, mở rộng review và chốt câu hỏi guideline còn lại.
 
-Việc cần làm tiếp:
-- Part 5 có ba ảnh mask; chỉnh lại tuk-tuk và motorbike để tách người khỏi xe theo contract.
-- Ghi thời gian review batch vào `time_log.csv` nếu có số đo thật.
-- Ghi ít nhất 3 quyết định calibration, cập nhật guideline v1.1, rồi tạo mẫu QC và báo cáo.
-- Kiểm tra các lỗi theo đối tượng và theo ảnh.
-- Chỉ quyết định Release khi đáp ứng điều kiện chất lượng của dự án.
+Việc cần làm tiếp: sửa box/person trong `img_031`, box motorbike trong `img_035`, rà lại 12 bẫy theo checklist, chốt câu hỏi guideline còn mở bằng ví dụ ảnh, sau đó chạy lại build/QC.
 
 ## 8. Ghi chú cá nhân
 
 - Dùng AI để làm bài: Có sử dụng YOLO26 và YOLOE để tạo pre-label; sử dụng ChatGPT hỗ trợ đọc hướng dẫn, kiểm tra quy trình và phân tích kết quả threshold. Tôi kiểm tra lại nhãn Gold bằng cách tự gán thủ công trên CVAT.
 - Gold có bị nhiễm không: Tôi đã trực tiếp gán nhãn thủ công 4 ảnh Gold trên CVAT. Chưa có xác nhận trong ghi chép rằng tôi không xem pre-label hoặc hỏi AI trước khi hoàn thành Gold, nên chưa thể kết luận Gold không bị nhiễm.
-- Máy / GPU / CVAT dùng; vướng mắc cài đặt: các lần chạy trong `model_log.csv` đều ghi thiết bị CPU; không có thông tin GPU, cấu hình máy hoặc phiên bản CVAT. Việc dùng CVAT để gán Gold đã được ghi ở trên; vướng mắc cài đặt chưa được ghi nhận.
+- Máy / GPU / CVAT dùng; vướng mắc cài đặt: Windows 11, PyTorch 2.15.0+cpu, không có CUDA GPU được nhận diện. Repo hướng dẫn CVAT 2.81.0; đây là phiên bản tham chiếu, chưa xác minh phiên bản thực tế trên máy. Vướng mắc cài đặt chưa được ghi nhận.
 - Cache: hiện có `data/cache/yolo26m_all_c005.coco.json` và `data/cache/yoloe26s_three_wheeler_all_c005.coco.json`; chưa có nhật ký lệnh xác nhận những cache này có được dùng cho merge/threshold sweep hay không. Các run r01–r06 được ghi riêng trong `work/runs.csv`.
 - Lỗi / bug script đã gặp: File `submission/labels/gold_manual.json` ban đầu chưa tồn tại. Sau khi export annotations từ CVAT định dạng COCO 1.0 và đổi tên file, đã validate thành công với 4 ảnh và 47 annotation (45 vật thể, 2 `ignore_region`).
 - Một điều tôi làm khác lần sau: Tôi sẽ hoàn thiện và kiểm tra dữ liệu Gold trước khi chạy đánh giá threshold, đồng thời ghi lại thời gian và các quyết định sửa nhãn ngay trong quá trình review để tránh thiếu dữ liệu khi làm báo cáo.
