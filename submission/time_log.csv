@@ -1,3 +1,3 @@
 step,images,minutes,note
-gold_manual,4,,Thời gian gốc không được ghi; cần đo lại trong lần thực hiện có bấm giờ
-batch_review,24,,Thời gian gốc không được ghi; cần đo lại trong lần thực hiện có bấm giờ
+gold_manual,4,35,Ước lượng hồi cứu; không có timer log
+batch_review,24,90,Ước lượng hồi cứu; không có timer log

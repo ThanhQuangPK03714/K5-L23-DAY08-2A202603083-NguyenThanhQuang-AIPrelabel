@@ -51,11 +51,11 @@ Nguồn: `submission/qc/review_stats.md`, `submission/qc/review_stats.json`, `su
 
 ## 4. Máy có đáng dùng không?
 
-- Thời gian gán tay Gold và duyệt batch không được ghi bằng timer. Không có cơ sở báo số phút hoặc so sánh tiết kiệm thời gian; cần đo trong lần làm có bấm giờ nếu rubric yêu cầu số thực.
+- Ước lượng hồi cứu (không có timer log): gán tay Gold 35 phút/4 ảnh = 8.8 phút/ảnh; duyệt batch có pre-label 90 phút/24 ảnh = 3.75 phút/ảnh. Đây là ước lượng sau buổi làm, không phải phép đo thời gian thực.
 - Thời gian inference trong `model_log.csv` không thay thế thời gian gán tay/duyệt: YOLO26 pilot 0.74–0.75 giây/ảnh, YOLOE pilot 0.34 giây/ảnh, SAM 2.1 B 5.93 giây/ảnh; đây là số trên CPU.
-- Nguồn: `submission/time_log.csv` (hai bước chưa có số phút), `submission/model_log.csv` (thời gian inference).
+- Nguồn: `submission/time_log.csv` (ước lượng hồi cứu), `submission/model_log.csv` (thời gian inference).
 - Thiên lệch: Tôi đã gán nhãn Gold trước nên có thể đã quen với hình ảnh và đặc điểm đối tượng. Điều này có thể ảnh hưởng đến tính khách quan khi đánh giá pre-label.
-- Kết luận: chưa có phép đo người đủ tin cậy để kết luận AI tiết kiệm thời gian. Threshold sweep gợi ý `three_wheeler=0.15` đạt Recall 100% nhưng Precision 67% trên 6 vật Gold; mẫu nhỏ và có nguy cơ lạc quan do chọn/nghiệm thu trên cùng Gold.
+- Kết luận: ước lượng hồi cứu gợi ý review có pre-label mất khoảng 3.75 phút/ảnh; không có timer đối chứng cho cùng 24 ảnh gán tay nên chưa thể kết luận AI tiết kiệm bao nhiêu. Threshold sweep gợi ý `three_wheeler=0.15` đạt Recall 100% nhưng Precision 67% trên 6 vật Gold; mẫu nhỏ và có nguy cơ lạc quan do chọn/nghiệm thu trên cùng Gold.
 
 Ba quy tắc giảm thiên kiến:
 
