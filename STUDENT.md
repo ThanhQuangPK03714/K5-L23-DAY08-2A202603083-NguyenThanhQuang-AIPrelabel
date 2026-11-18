@@ -5,7 +5,7 @@
 - Lớp: L2
 - Tài khoản GitHub: https://github.com/ThanhQuangPK03714/K5-L23-DAY08-2A202603083-NguyenThanhQuang-AIPrelabel
 - Repo bài nộp (URL): (https://github.com/ThanhQuangPK03714/K5-L23-DAY08-2A202603083-NguyenThanhQuang-AIPrelabel)
-- Commit chốt bài (hash): sẽ điền sau commit cuối
+- Commit chốt nội dung bài: `57968609`
 - Máy: Windows 11; PyTorch 2.15.0+cpu; không có CUDA GPU được PyTorch nhận diện
 - CVAT (Docker): 2.81.0 là phiên bản ghim trong hướng dẫn repo; phiên bản thực chạy chưa xác minh
 
