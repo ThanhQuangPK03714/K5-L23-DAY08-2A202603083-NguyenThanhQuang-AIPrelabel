@@ -65,14 +65,16 @@ Ba quy tắc giảm thiên kiến:
 
 ## 5. Mask SAM cho 3 vật (Part 5)
 
-| Ảnh | SAM (phiên bản) | Số click | Mask gồm người lái / hàng hóa? | Lỗi quan sát | File trong masks/ |
-|---|---|---|---|---|---|
-| `img_013` tuk-tuk | SAM 2.1 B (`sam2.1_b.pt`) | 6 (4 dương, 2 âm) | Có; mask gồm xe, người lái và hành khách | Mask gom nhiều cá thể thành một vùng; cần tách person khỏi xe theo contract | `masks/tuktuk_img013.jpg` |
-| `img_001` pickup | SAM 2.1 B (`sam2.1_b.pt`) | 6 (4 dương, 2 âm) | Không thấy người lái/hàng hóa trong vùng mask | Biên xe khá gọn, nền đường bên ngoài được loại; chưa đo IoU | `masks/pickup_img001.jpg` |
-| `img_002` motorbike | SAM 2.1 B (`sam2.1_b.pt`) | 7 (4 dương, 3 âm) | Có; mask gồm cả người lái và xe máy | Click âm chưa tách được người khỏi xe; một mask đang gộp hai đối tượng | `masks/motorbike_img002.jpg` |
+| Ảnh / đối tượng | SAM (phiên bản) | Số click | Kết quả và giới hạn | File trong masks/ |
+|---|---|---:|---|---|
+| `img_013` tuk-tuk (xe) | SAM 2.1 B (`sam2.1_b.pt`) | 13 (4 dương, 9 âm) | Mask xe đã loại phần lớn người nhìn thấy; rà lại biên mái và các thanh khung, chưa đo IoU. | `masks/tuktuk_img013.jpg` |
+| `img_013` người lái | SAM 2.1 B (`sam2.1_b.pt`) | 6 (3 dương, 3 âm) | Có mask riêng cho người lái; biên tại chỗ tiếp xúc ghế/xe vẫn cần kiểm tra. | `masks/tuktuk_driver_img013.jpg` |
+| `img_001` pickup | SAM 2.1 B (`sam2.1_b.pt`) | 6 (4 dương, 2 âm) | Biên xe khá gọn, nền ngoài xe được loại; chưa đo IoU. | `masks/pickup_img001.jpg` |
+| `img_002` motorbike (phần xe nhìn thấy) | SAM 2.1 B (`sam2.1_b.pt`) | 6 (2 dương, 4 âm) | Mask xe giới hạn vào phần xe lộ ra; phần bị người che không được đoán. | `masks/motorbike_img002.jpg` |
+| `img_002` người lái | SAM 2.1 B (`sam2.1_b.pt`) | 6 (3 dương, 3 âm) | Có mask riêng cho người lái; vùng tay tiếp xúc tay lái cần rà biên thủ công. | `masks/motorbike_rider_img002.jpg` |
 
-- Đối chiếu guideline mục 4.2: pickup cho thấy biên có thể bám theo vật; hai mask tuk-tuk và motorbike còn gộp người với xe, trong khi contract yêu cầu vật chạm nhau có polygon riêng. Cần thêm click âm/điều chỉnh prompt để tách, rồi kiểm tra lỗ và biên ở mức khoảng 3 px.
-- Interactor SAM trong CVAT: chưa có ghi chép cho một lần chạy bên trong CVAT; ba ảnh trên được tạo bằng `scripts/sam2_points.py` để mô phỏng click.
+- Đối chiếu guideline mục 4.2: người và phương tiện chạm nhau được lưu thành các mask riêng. Tuk-tuk và xe máy bị che khuất nên các mask chỉ mô tả vùng nhìn thấy; ảnh overlay là bằng chứng thao tác, không thay phép đo IoU hoặc bản polygon đã kiểm tra từng đỉnh.
+- Interactor SAM trong CVAT: chưa có ghi chép chạy bên trong CVAT; các mask trên được tạo bằng `scripts/sam2_points.py` với SAM 2.1 B trên CPU.
 
 ## 6. Calibration (Part 6)
 
