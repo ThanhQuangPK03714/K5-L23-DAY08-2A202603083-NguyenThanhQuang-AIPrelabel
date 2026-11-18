@@ -81,21 +81,19 @@ Ba quy tắc giảm thiên kiến:
 - Đã ghi 3 quyết định ở `qc/calibration_decisions.csv`: lỗi model gán xe ba bánh (CAL-01, `img_013`), câu hỏi mask cho hàng rời (CAL-02, `img_031`), và bẫy box lỏng lọt review (CAL-03, `img_035`).
 - Quy tắc tương ứng đã được thêm vào `guidelines/guideline_v1.1_calibrated.md`. Không đặt confidence tối thiểu để auto-accept; vẫn kiểm tra lớp và biên bằng ảnh.
 - Các câu hỏi v1.0 số 1, 2, 4, 5, 6 chưa có ca ảnh đủ rõ để chốt; ghi rõ còn mở. Đây là một lý do giữ Hold, không suy diễn câu trả lời.
-- Phân biệt nguyên nhân: YOLO26 thiếu lớp `three_wheeler` là giới hạn/mapping của máy; bẫy loose `img_035` lọt review là lỗi quy trình kiểm box; mask gom xe với người ở `img_013`/`img_002` là kết quả SAM chưa tách được hai cá thể, dù quy tắc tách người và xe đã có trong v1.0.
+- Phân biệt nguyên nhân: YOLO26 thiếu lớp `three_wheeler` là giới hạn/mapping của máy; bẫy loose `img_035` lọt review là lỗi quy trình kiểm box. Overlay SAM cập nhật cho `img_013` và `img_002` có mask riêng cho phương tiện và người nhìn thấy; vùng tiếp xúc/che khuất vẫn cần duyệt đỉnh mask thủ công trước khi dùng làm nhãn polygon.
 
 ## 7. QC và quyết định (Part 6)
 
 - Mẫu QC gồm 5/24 ảnh batch và 102 đối tượng; danh sách ở `qc/qc_sample.csv`. Mẫu lấy ngẫu nhiên theo seed 42, không có ảnh `can_review` được đưa thêm.
-- Đã rà overlay đối chiếu ảnh gốc. Ghi nhận 2 lỗi trên 2 ảnh: ảnh có lỗi 2/5 = 40%; lỗi theo đối tượng 2/102 = 2.0%. Cụ thể: `img_031` box #445 gán `person` cho mũ trưng bày; `img_035` box motorbike #496 còn lỏng, trùng ca bẫy loose đã lọt.
-- Các ảnh `img_003`, `img_006`, `img_014` không ghi nhận lỗi rõ trong lượt rà này. Mẫu ngẫu nhiên chỉ 5 ảnh nên không đại diện đủ để khẳng định tỷ lệ lỗi toàn bộ lô.
-- `qc_report_auto.md` tính cận trên Wilson 95%; với 2/5 ảnh lỗi, cận trên rất rộng. Ngưỡng 2% không được chứng minh bằng mẫu nhỏ. Tỷ lệ bắt bẫy Part 4 vẫn là 3/12 = 25%, thấp hơn yêu cầu 80%.
-- Script chỉ tổng hợp lỗi đã ghi trong phiếu, không tự xác nhận tính đúng ngữ nghĩa. QC phát hiện lỗi nên chưa có cơ sở phát hành.
+- Lượt QC ban đầu rà overlay trên ảnh gốc và ghi nhận 2 lỗi/2 ảnh: 2/5 = 40% ảnh lỗi; 2/102 = 2.0% đối tượng. Cụ thể: `img_031` box #445 gán `person` cho mũ trưng bày; `img_035` box motorbike #496 còn lỏng và trùng ca bẫy loose đã lọt. Ba ảnh còn lại trong mẫu (`img_003`, `img_006`, `img_014`) không ghi nhận lỗi rõ trong lượt rà đó. Đây là tỷ lệ của mẫu ban đầu, không phải ước lượng chắc chắn cho toàn bộ lô.
+- Hai lỗi đã được sửa trong `labels/qc_fixed.json`, và `python scripts/build_release.py` đã tạo lại **release candidate**: `img_031` bỏ box #445; `img_035` khôi phục bbox #496 về `orig_box` trong `prelabel/traps_key.json`. Nhật ký từng sửa nằm ở `qc/qc_remediation.csv`; manifest ghi nhận hai ảnh được thay. Số lượng ứng viên sau sửa là 24 ảnh, 520 đối tượng (giảm một box false positive).
+- `qc_report_auto.md` lưu thống kê phiếu QC ban đầu: cận trên Wilson 95% rộng; mẫu nhỏ không chứng minh ngưỡng lỗi 2%. Việc sửa hai phát hiện không biến kết quả QC ban đầu thành 0 lỗi. Cần lấy mẫu hậu sửa độc lập trước khi xem xét phát hành.
+- Tỷ lệ bắt bẫy vẫn là 3/12 = 25%, thấp hơn yêu cầu 80%; năm câu hỏi guideline v1.0 vẫn mở. Các lý do này độc lập với hai sửa QC nên quyết định vẫn là HOLD.
 
 **Quyết định: HOLD**, ngày 2026-11-18.
 
-Lý do: còn 5 câu hỏi trong guideline v1.0 chưa chốt; QC tìm thấy 2 lỗi/5 ảnh; bắt bẫy chỉ 3/12, dưới ngưỡng 80%. Không phát hành release candidate cho tới khi xử lý lỗi, mở rộng review và chốt câu hỏi guideline còn lại.
-
-Việc cần làm tiếp: sửa box/person trong `img_031`, box motorbike trong `img_035`, rà lại 12 bẫy theo checklist, chốt câu hỏi guideline còn mở bằng ví dụ ảnh, sau đó chạy lại build/QC.
+Release candidate đã được build để lưu kết quả sửa và phục vụ kiểm tra; đây chưa phải bản được phê duyệt phát hành. Cần rà độc lập sau sửa, xem lại 12 bẫy và chốt các câu hỏi guideline còn mở trước khi cân nhắc Release.
 
 ## 8. Ghi chú cá nhân
 

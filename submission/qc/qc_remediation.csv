@@ -1,0 +1,3 @@
+image,object_id,error_type,action,evidence,status
+img_031.jpg,445,thua,removed from QC candidate,QC overlay: object is a displayed cap rather than a person; see submission/qc/qc_review.csv,applied
+img_035.jpg,496,sai_vi_tri_kich_thuoc,bbox restored to trap key orig_box,submission/prelabel/traps_key.json entry for img_035 loose trap; original bbox 882.28 501.14 45.54 69.89,applied
