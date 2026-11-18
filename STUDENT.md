@@ -14,6 +14,6 @@
 - Máy: accepted / edited / deleted: 495 / 2 / 22 (mẫu số: 520 box máy); added: 11 (mẫu số: 508 đối tượng sau duyệt)
 - So với gold: precision / recall của **máy** 40/71 = 56.3% / 40/45 = 88.9% (4 ảnh gold; in-sample)
 - Bắt bẫy: 3/12 = 25.0% (dưới ngưỡng 80%)
-- Thời gian (ước lượng hồi cứu, không phải số đo có timer): gold_manual 35 phút/4 ảnh = 8.8 phút/ảnh; batch_review 90 phút/24 ảnh = 3.75 phút/ảnh
+- Thời gian: chưa ghi nhận; cần đo lại cho gold_manual và batch_review bằng timer trước khi nộp
 - Lỗi QC: 2/5 ảnh = 40.0%; 2/102 đối tượng = 2.0% trong mẫu QC hiện tại
 - **Quyết định:** Hold — còn câu hỏi guideline chưa chốt; QC cũng phát hiện lỗi và bắt bẫy chỉ 3/12, thấp hơn ngưỡng. Không phát hành nhãn này.
